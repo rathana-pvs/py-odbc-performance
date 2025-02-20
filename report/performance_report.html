@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Test Overview</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .header {
+            background: #0073e6;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            color: #333;
+            border-bottom: 2px solid #0073e6;
+            padding-bottom: 5px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            padding: 5px 0;
+        }
+        canvas {
+            display: block;
+            margin: 20px auto;
+            width: 80% !important;
+            height: auto !important;
+        }
+    </style>
+</head>
+<body>
+<div class="header">Performance Test Overview</div>
+<div class="container">
+    <h1>Overview</h1>
+    <p>This test intends to measure the performance between the NodeJS driver released by Cubrid and Node-ODBC.</p>
+
+    <h2>Test Environment</h2>
+    <ul>
+        <li><strong>Window:</strong> 10</li>
+        <li><strong>Python:</strong> 3.6.8</li>
+        <li><strong>Cubrid:</strong> 11.3 (11.3.2.1187-3c096d3)</li>
+        <li><strong>Cubrid-Python:</strong> 11.2.1.51</li>
+        <li><strong>pyodbc:</strong> 4.0.39</li>
+    </ul>
+
+    <h2>Data Preparation</h2>
+    <ul>
+        <li><strong>Table:</strong></li>
+        <ul>
+            <li><strong>Columns:</strong> 3</li>
+            <li><strong>Data Type:</strong> INTEGER, VARCHAR(255), VARCHAR(255)</li>
+            <li><strong>Sampling:</strong> 50000</li>
+        </ul>
+    </ul>
+
+
+    <!-- Graph Section -->
+    <h2>Performance Comparison</h2>
+    <div>
+        <canvas id="auto"></canvas>
+    </div>
+
+    <h2>Sampling Operation</h2>
+
+    <p>This method aims to reduce bias in the results by minimizing the impact of server load, which may fluctuate due to other applications utilizing system resources. Instead of running a single test, the process is repeated multiple times for more reliable sampling.</p>
+
+    <ul>
+        <li><strong>Samples per execution: 25000</strong></li>
+        <li><strong>Total executions: 20</strong></li>
+    </ul>
+
+    <p><i>The vertical axis represents the duration in milliseconds (ms).</i></p>
+    <p><i>The horizontal axis represents the number of executions.</i></p>
+
+    <div>
+        <canvas id="insert"></canvas>
+    </div>
+    <div>
+        <canvas id="select"></canvas>
+    </div>
+    <div>
+        <canvas id="update"></canvas>
+    </div>
+    <div>
+        <canvas id="delete"></canvas>
+    </div>
+
+
+    <b></b>
+    <b></b>
+        <h2>1. Overall Performance Comparison</h2>
+        <p>Cubrid operations generally have <span class="highlight">higher execution times</span> compared to ODBC across all four operations (insert, select, update, delete).</p>
+        <p>Insert, update, and delete times are significantly higher than select times for both databases, which makes sense as selects are typically faster than write operations.</p>
+        <p><span class="highlight">ODBC appears to be consistently faster</span> than Cubrid in all operations.</p>
+
+
+
+        <h2>2. Operation-Specific Trends</h2>
+        <h3>Insert</h3>
+        <p><span class="highlight">Cubrid:</span> Avg ~1,710 ms, <span class="highlight">ODBC:</span> Avg ~1,186 ms → ODBC is <span class="highlight">~30% faster</span></p>
+
+        <h3>Select</h3>
+        <p><span class="highlight">Cubrid:</span> Avg ~3.4 ms, <span class="highlight">ODBC:</span> Avg ~4.3 ms → Cubrid is <span class="highlight">slightly faster</span></p>
+
+        <h3>Update</h3>
+        <p><span class="highlight">Cubrid:</span> Avg ~1,660 ms, <span class="highlight">ODBC:</span> Avg ~1,229 ms → ODBC is <span class="highlight">~26% faster</span></p>
+
+        <h3>Delete</h3>
+        <p><span class="highlight">Cubrid:</span> Avg ~1,640 ms, <span class="highlight">ODBC:</span> Avg ~1,123 ms → ODBC is <span class="highlight">~31% faster</span></p>
+
+
+        <h2>3. Conclusion</h2>
+        <p>The performance analysis of <span class="highlight">Cubrid</span> and <span class="highlight">ODBC</span> reveals that <span class="highlight">ODBC consistently outperforms Cubrid</span> in most operations, particularly in <span class="highlight">insert, update, and delete</span> functions, where it is <span class="highlight">26-31% faster</span> on average. The only exception is the <span class="highlight">select operation</span>, where Cubrid performs slightly better than ODBC.</p>
+
+
+
+
+</div>
+
+<!-- Chart.js Script -->
+<script>
+
+    let data ={
+    "cubrid": {
+        "insert": 34626.965045928955,
+        "select": 128.43656539916992,
+        "update": 39605.3569316864,
+        "delete": 38889.278173446655
+    },
+    "odbc": {
+        "insert": 26276.513814926147,
+        "select": 126.79243087768555,
+        "update": 29060.439586639404,
+        "delete": 28064.3150806427
+    }
+}
+    const ctx = document.getElementById('auto').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Insert', 'Select', 'Update', 'Delete'],
+            datasets: [{
+                label: 'Cubrid',
+                data: Object.values(data.cubrid),
+                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 2
+            }, {
+                label: 'ODBC',
+                data: Object.values(data.odbc),
+                backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top'
+                },
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Performance (ms)'
+                    }
+                }
+            }
+        }
+    });
+
+
+    // Configuration options
+
+    let result = {
+    "cubrid": {
+        "insert": [
+            1965.65580368042,
+            1659.6837043762207,
+            1674.4153499603271,
+            1645.1737880706787,
+            1876.023530960083,
+            1731.5034866333008,
+            1667.9766178131104,
+            1766.7980194091797,
+            1661.6287231445312,
+            1700.7911205291748,
+            1690.7334327697754,
+            1640.1383876800537,
+            1687.7374649047852,
+            1710.099697113037,
+            1740.4725551605225,
+            1751.8422603607178,
+            1710.5765342712402,
+            1698.0810165405273,
+            1713.0496501922607,
+            1697.3037719726562
+        ],
+        "select": [
+            7.913112640380859,
+            5.146265029907227,
+            3.1392574310302734,
+            3.072500228881836,
+            3.0786991119384766,
+            3.086090087890625,
+            2.6755332946777344,
+            3.385782241821289,
+            3.3729076385498047,
+            2.987384796142578,
+            3.0968189239501953,
+            2.978086471557617,
+            2.547740936279297,
+            2.9959678649902344,
+            3.0198097229003906,
+            2.9883384704589844,
+            3.6423206329345703,
+            5.620241165161133,
+            3.0939579010009766,
+            2.9993057250976562
+        ],
+        "update": [
+            1937.6187324523926,
+            1645.6513404846191,
+            1597.6510047912598,
+            1665.9860610961914,
+            1662.6386642456055,
+            1625.8761882781982,
+            1671.935796737671,
+            1645.3392505645752,
+            1681.5283298492432,
+            1670.6087589263916,
+            1626.460313796997,
+            1665.475606918335,
+            1628.4656524658203,
+            1616.4145469665527,
+            1642.2672271728516,
+            1686.3932609558105,
+            1645.93505859375,
+            1763.3593082427979,
+            1632.4381828308105,
+            1734.6606254577637
+        ],
+        "delete": [
+            1956.2315940856934,
+            1627.190113067627,
+            1578.6986351013184,
+            1553.3356666564941,
+            1603.588342666626,
+            1641.7086124420166,
+            1602.8883457183838,
+            1580.371618270874,
+            1600.1911163330078,
+            1611.375093460083,
+            1764.1205787658691,
+            1638.359546661377,
+            1584.2993259429932,
+            1610.1205348968506,
+            1576.2059688568115,
+            1557.800531387329,
+            1611.2585067749023,
+            1945.8057880401611,
+            1686.4984035491943,
+            1591.0651683807373
+        ]
+    },
+    "odbc": {
+        "insert": [
+            1294.170618057251,
+            1268.57328414917,
+            1176.3625144958496,
+            1171.9996929168701,
+            1238.569736480713,
+            1369.046688079834,
+            1162.8620624542236,
+            1127.3260116577148,
+            1189.4359588623047,
+            1175.299882888794,
+            1199.1586685180664,
+            1135.6933116912842,
+            1195.479393005371,
+            1145.3421115875244,
+            1144.1593170166016,
+            1203.7882804870605,
+            1099.095106124878,
+            1142.6641941070557,
+            1133.9855194091797,
+            1165.848970413208
+        ],
+        "select": [
+            3.170013427734375,
+            5.056858062744141,
+            4.055500030517578,
+            6.0214996337890625,
+            2.4034976959228516,
+            6.412506103515625,
+            3.9963722229003906,
+            3.0143260955810547,
+            8.074760437011719,
+            3.2987594604492188,
+            5.077600479125977,
+            5.113363265991211,
+            5.052089691162109,
+            5.00178337097168,
+            3.5157203674316406,
+            3.995180130004883,
+            3.973722457885742,
+            4.111051559448242,
+            3.135204315185547,
+            3.0357837677001953
+        ],
+        "update": [
+            1240.8232688903809,
+            1265.7201290130615,
+            1265.911340713501,
+            1213.7627601623535,
+            1204.6096324920654,
+            1503.3462047576904,
+            1294.7516441345215,
+            1146.6937065124512,
+            1177.3583889007568,
+            1168.8742637634277,
+            1238.3804321289062,
+            1156.5630435943604,
+            1161.806344985962,
+            1239.1448020935059,
+            1261.7108821868896,
+            1195.591688156128,
+            1212.8615379333496,
+            1263.786792755127,
+            1223.5901355743408,
+            1131.9475173950195
+        ],
+        "delete": [
+            1106.6930294036865,
+            1240.6904697418213,
+            1200.7336616516113,
+            1126.8577575683594,
+            1118.4415817260742,
+            1318.5491561889648,
+            1152.953863143921,
+            1072.2160339355469,
+            1092.4813747406006,
+            1087.9299640655518,
+            1144.2623138427734,
+            1101.9415855407715,
+            1134.7742080688477,
+            1119.5905208587646,
+            1080.9180736541748,
+            1157.2976112365723,
+            1059.7095489501953,
+            1114.3248081207275,
+            1114.311933517456,
+            1105.40771484375
+        ]
+    }
+}
+
+
+
+    const generateSequence = (start, end, step = 1) =>
+        Array.from({length: Math.ceil((end - start + 1) / step)}, (_, i) => start + i * step);
+    labels = generateSequence(1, result["cubrid"]["insert"].length);
+    let keys = ["insert", "select", "update", "delete"]
+        keys.forEach(element => {
+        const data = {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Cubrid',
+                    data: result["cubrid"][element],
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    fill: false,
+                },
+                {
+                    label: 'ODBC',
+                    data: result["odbc"][element],
+                    borderColor: 'rgba(153, 102, 255, 1)',
+                    fill: false,
+                }
+            ]
+        };
+        const config = {
+            type: 'line',
+            data: data,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: `Comparison ${element}`,
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Duration (ms)'
+                        }
+                    }
+                }
+            },
+        };
+
+        const myChart = new Chart(document.getElementById(element).getContext('2d'), config);
+    })
+
+
+</script>
+
+</body>
+</html>
